@@ -1,9 +1,10 @@
+import { useState } from "react";
 import { 
   DollarSign, 
   TrendingUp, 
   Target,
   BarChart3,
-  Download,
+  Upload,
   RefreshCw,
   Settings
 } from "lucide-react";
@@ -17,18 +18,37 @@ import {
   GunaHonestyTrend 
 } from "@/components/dashboard/Charts";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { FileUpload } from "@/components/dashboard/FileUpload";
+import { ExportButtons } from "@/components/dashboard/ExportButtons";
 import { 
   sampleToolData, 
   calculateKPIs, 
-  getChartData 
+  getChartData,
+  ToolData
 } from "@/data/dashboardData";
 
 const Index = () => {
-  const kpis = calculateKPIs(sampleToolData);
-  const chartData = getChartData(sampleToolData);
+  const [currentData, setCurrentData] = useState<ToolData[]>(sampleToolData);
+  const [dataSource, setDataSource] = useState<'sample' | 'uploaded'>('sample');
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+
+  const handleDataUploaded = (uploadedData: ToolData[]) => {
+    setCurrentData(uploadedData);
+    setDataSource('uploaded');
+    setUploadDialogOpen(false);
+  };
+
+  const handleUseSampleData = () => {
+    setCurrentData(sampleToolData);
+    setDataSource('sample');
+  };
+
+  const kpis = calculateKPIs(currentData);
+  const chartData = getChartData(currentData);
   
   // Prepare data for Guna Honesty chart
-  const gunaData = sampleToolData.map(tool => ({
+  const gunaData = currentData.map(tool => ({
     name: tool.name,
     honesty: tool.gunaHonestyMeter
   }));
@@ -45,17 +65,36 @@ const Index = () => {
               </h1>
               <p className="text-muted-foreground mt-1">
                 Comprehensive analysis of team tool spending and utilization
+                {dataSource === 'uploaded' && (
+                  <span className="ml-2 text-primary font-medium">• Using uploaded data</span>
+                )}
               </p>
             </div>
             <div className="flex items-center gap-3">
-              <Button variant="outline" size="sm" className="gap-2">
-                <RefreshCw className="h-4 w-4" />
-                Sync Data
-              </Button>
-              <Button variant="outline" size="sm" className="gap-2">
-                <Download className="h-4 w-4" />
-                Export
-              </Button>
+              <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <Upload className="h-4 w-4" />
+                    Upload
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle>Upload Your Spreadsheet</DialogTitle>
+                  </DialogHeader>
+                  <FileUpload onDataUploaded={handleDataUploaded} />
+                </DialogContent>
+              </Dialog>
+              
+              {dataSource === 'uploaded' && (
+                <Button variant="outline" size="sm" onClick={handleUseSampleData} className="gap-2">
+                  <RefreshCw className="h-4 w-4" />
+                  Use Sample Data
+                </Button>
+              )}
+              
+              <ExportButtons data={currentData} filename="tool-dashboard" variant="compact" />
+              
               <Button variant="outline" size="sm">
                 <Settings className="h-4 w-4" />
               </Button>
@@ -101,7 +140,7 @@ const Index = () => {
         </div>
 
         {/* Budget Alerts */}
-        <BudgetAlerts data={sampleToolData} monthlyBudget={300} />
+        <BudgetAlerts data={currentData} monthlyBudget={300} />
 
         {/* Charts Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -115,12 +154,9 @@ const Index = () => {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-semibold">Detailed Tool Analysis</h2>
-            <Button variant="outline" className="gap-2">
-              <Download className="h-4 w-4" />
-              Export Table
-            </Button>
+            <ExportButtons data={currentData} filename="tools-table" />
           </div>
-          <ToolsTable data={sampleToolData} />
+          <ToolsTable data={currentData} />
         </div>
 
         {/* Footer */}
