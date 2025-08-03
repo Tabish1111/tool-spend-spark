@@ -52,7 +52,7 @@ function mapRowToToolData(row: any, rowNumber: number): ToolData | null {
   const nameFields = ['name', 'tool name', 'tool_name', 'toolname', 'Name', 'Tool Name'];
   const costFields = ['monthly cost', 'monthlycost', 'monthly_cost', 'cost', 'price', 'Monthly Cost'];
   const accountFields = ['accounts', 'account', 'users', 'Accounts'];
-  const personFields = ['assigned person', 'assignedperson', 'assigned_person', 'person', 'owner', 'Assigned Person'];
+  const personFields = ['person', 'assigned person', 'assignedperson', 'assigned_person', 'owner', 'Person', 'Assigned Person'];
   const categoryFields = ['category', 'type', 'Category'];
   const gunaFields = ['guna honesty meter', 'guna', 'honesty', 'rating', 'Guna Honesty Meter'];
   const renewalFields = ['renewal date', 'renewaldate', 'renewal_date', 'expiry', 'Renewal Date'];

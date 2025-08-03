@@ -168,7 +168,7 @@ export function FileUpload({ onDataUploaded }: FileUploadProps) {
           <AlertDescription className="text-sm">
             <strong>CSV Format Requirements:</strong>
             <br />
-            Include columns: Tool Name, Monthly Cost, Accounts, Assigned Person, Category, Guna Honesty Meter, Renewal Date, Notes
+            Include columns: Tool Name, Monthly Cost, Accounts, Person, Renewal Date, Guna Honesty Meter
           </AlertDescription>
         </Alert>
       </div>
