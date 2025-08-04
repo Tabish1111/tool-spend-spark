@@ -2,8 +2,6 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { AlertTriangle, TrendingUp, DollarSign, Clock, ChevronDown, ChevronUp } from "lucide-react";
 import { ToolData } from "@/data/dashboardData";
 import { cn } from "@/lib/utils";
@@ -14,14 +12,12 @@ interface BudgetAlertsProps {
 }
 
 export function BudgetAlerts({ data, monthlyBudget = 300 }: BudgetAlertsProps) {
-  const [perToolBudget, setPerToolBudget] = useState<number>(50);
   const [showOverBudgetTools, setShowOverBudgetTools] = useState(false);
   const [showLowUtilityTools, setShowLowUtilityTools] = useState(false);
   
   const totalMonthly = data.reduce((sum, tool) => sum + tool.monthlyCost, 0);
   const budgetUsage = (totalMonthly / monthlyBudget) * 100;
   const overBudgetTools = data.filter(tool => tool.isOverBudget);
-  const expensiveTools = data.filter(tool => tool.monthlyCost > perToolBudget);
   const lowUtilityTools = data.filter(tool => tool.gunaHonestyMeter < 5);
   
   // Tools renewing soon (within 30 days)
@@ -41,11 +37,11 @@ export function BudgetAlerts({ data, monthlyBudget = 300 }: BudgetAlertsProps) {
       action: 'Review Spending'
     }] : []),
     
-    ...(expensiveTools.length > 0 ? [{
+    ...(overBudgetTools.length > 0 ? [{
       type: 'overbudget' as const,
       severity: 'high' as const,
       title: 'Tools Over Budget',
-      description: `${expensiveTools.length} tool(s) exceed $${perToolBudget} per tool budget`,
+      description: `${overBudgetTools.length} tool(s) marked as over budget`,
       action: 'Review Tools'
     }] : []),
     
@@ -113,25 +109,6 @@ export function BudgetAlerts({ data, monthlyBudget = 300 }: BudgetAlertsProps) {
           </Badge>
         </div>
         
-        {/* Per Tool Budget Input */}
-        <div className="flex items-center gap-4 p-4 bg-muted/30 rounded-lg">
-          <Label htmlFor="per-tool-budget" className="text-sm font-medium">
-            Budget per tool:
-          </Label>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">$</span>
-            <Input
-              id="per-tool-budget"
-              type="number"
-              value={perToolBudget}
-              onChange={(e) => setPerToolBudget(Number(e.target.value) || 0)}
-              className="w-24 h-8"
-              min="0"
-              step="10"
-            />
-            <span className="text-sm text-muted-foreground">/month</span>
-          </div>
-        </div>
         
         <div className="space-y-3">
           {alerts.map((alert, index) => {
@@ -196,14 +173,14 @@ export function BudgetAlerts({ data, monthlyBudget = 300 }: BudgetAlertsProps) {
           </div>
         
         {/* Over Budget Tools List */}
-        {showOverBudgetTools && expensiveTools.length > 0 && (
+        {showOverBudgetTools && overBudgetTools.length > 0 && (
           <div className="space-y-2">
             <h4 className="font-medium text-foreground flex items-center gap-2">
               <DollarSign className="h-4 w-4" />
-              Tools Over ${perToolBudget}/month Budget
+              Tools Over Budget
             </h4>
             <div className="space-y-2">
-              {expensiveTools.map((tool) => (
+              {overBudgetTools.map((tool) => (
                 <div 
                   key={tool.id}
                   className="flex items-center justify-between p-3 bg-destructive/5 border border-destructive/20 rounded-lg"
@@ -219,7 +196,7 @@ export function BudgetAlerts({ data, monthlyBudget = 300 }: BudgetAlertsProps) {
                       ${tool.monthlyCost}/month
                     </span>
                     <div className="text-xs text-muted-foreground">
-                      ${(tool.monthlyCost - perToolBudget).toFixed(2)} over budget
+                      Marked as over budget
                     </div>
                   </div>
                 </div>
