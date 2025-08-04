@@ -58,9 +58,12 @@ function mapRowToToolData(row: any, rowNumber: number): ToolData | null {
   const renewalFields = ['renewal date', 'renewaldate', 'renewal_date', 'expiry', 'Renewal Date'];
   const notesFields = ['notes', 'description', 'comment', 'Notes'];
 
-  // Find values using flexible field matching
+  // Find values using flexible field mapping
   const name = findValue(row, nameFields);
-  const monthlyCost = parseFloat(findValue(row, costFields) || '0');
+  const rawCost = findValue(row, costFields) || '0';
+  // Remove currency symbols and commas before parsing
+  const cleanCost = rawCost.replace(/[$,]/g, '');
+  const monthlyCost = parseFloat(cleanCost);
   const accounts = parseInt(findValue(row, accountFields) || '1');
   const rawAssignedPerson = findValue(row, personFields) || 'Rudyculous';
   const assignedPerson = ['Rudyculous', 'Rudraksh', 'Both'].includes(rawAssignedPerson) 
