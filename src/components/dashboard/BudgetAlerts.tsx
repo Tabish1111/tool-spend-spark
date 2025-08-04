@@ -15,11 +15,13 @@ interface BudgetAlertsProps {
 
 export function BudgetAlerts({ data, monthlyBudget = 300 }: BudgetAlertsProps) {
   const [perToolBudget, setPerToolBudget] = useState<number>(50);
+  const [yearlyBudget, setYearlyBudget] = useState<number>(3600);
   const [showOverBudgetTools, setShowOverBudgetTools] = useState(false);
   const [showLowUtilityTools, setShowLowUtilityTools] = useState(false);
   
   const totalMonthly = data.reduce((sum, tool) => sum + tool.monthlyCost, 0);
-  const budgetUsage = (totalMonthly / monthlyBudget) * 100;
+  const totalYearly = data.reduce((sum, tool) => sum + tool.actualYearlyCost, 0);
+  const budgetUsage = (totalYearly / yearlyBudget) * 100;
   const overBudgetTools = data.filter(tool => tool.isOverBudget);
   const expensiveTools = data.filter(tool => tool.monthlyCost > perToolBudget);
   const lowUtilityTools = data.filter(tool => tool.gunaHonestyMeter < 5);
@@ -37,7 +39,7 @@ export function BudgetAlerts({ data, monthlyBudget = 300 }: BudgetAlertsProps) {
       type: 'budget' as const,
       severity: budgetUsage > 100 ? 'high' as const : 'medium' as const,
       title: budgetUsage > 100 ? 'Budget Exceeded' : 'Budget Warning',
-      description: `${budgetUsage.toFixed(1)}% of monthly budget used ($${totalMonthly.toFixed(2)} / $${monthlyBudget})`,
+      description: `${budgetUsage.toFixed(1)}% of yearly budget used ($${totalYearly.toFixed(2)} / $${yearlyBudget})`,
       action: 'Review Spending'
     }] : []),
     
@@ -113,23 +115,44 @@ export function BudgetAlerts({ data, monthlyBudget = 300 }: BudgetAlertsProps) {
           </Badge>
         </div>
         
-        {/* Per Tool Budget Input */}
-        <div className="flex items-center gap-4 p-4 bg-muted/30 rounded-lg">
-          <Label htmlFor="per-tool-budget" className="text-sm font-medium">
-            Budget per tool:
-          </Label>
+        {/* Budget Inputs */}
+        <div className="flex items-center gap-8 p-4 bg-muted/30 rounded-lg">
           <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">$</span>
-            <Input
-              id="per-tool-budget"
-              type="number"
-              value={perToolBudget}
-              onChange={(e) => setPerToolBudget(Number(e.target.value) || 0)}
-              className="w-24 h-8"
-              min="0"
-              step="10"
-            />
-            <span className="text-sm text-muted-foreground">/month</span>
+            <Label htmlFor="per-tool-budget" className="text-sm font-medium">
+              Budget per tool:
+            </Label>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">$</span>
+              <Input
+                id="per-tool-budget"
+                type="number"
+                value={perToolBudget}
+                onChange={(e) => setPerToolBudget(Number(e.target.value) || 0)}
+                className="w-24 h-8"
+                min="0"
+                step="10"
+              />
+              <span className="text-sm text-muted-foreground">/month</span>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <Label htmlFor="yearly-budget" className="text-sm font-medium">
+              Total Budget (per year):
+            </Label>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">$</span>
+              <Input
+                id="yearly-budget"
+                type="number"
+                value={yearlyBudget}
+                onChange={(e) => setYearlyBudget(Number(e.target.value) || 0)}
+                className="w-28 h-8"
+                min="0"
+                step="100"
+              />
+              <span className="text-sm text-muted-foreground">/year</span>
+            </div>
           </div>
         </div>
         
@@ -170,25 +193,27 @@ export function BudgetAlerts({ data, monthlyBudget = 300 }: BudgetAlertsProps) {
                       </p>
                     </div>
                   </div>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="shrink-0"
-                    onClick={() => {
-                      if (alert.type === 'overbudget') {
-                        setShowOverBudgetTools(!showOverBudgetTools);
-                      } else if (alert.type === 'utility') {
-                        setShowLowUtilityTools(!showLowUtilityTools);
+                  {alert.type !== 'budget' && (
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="shrink-0"
+                      onClick={() => {
+                        if (alert.type === 'overbudget') {
+                          setShowOverBudgetTools(!showOverBudgetTools);
+                        } else if (alert.type === 'utility') {
+                          setShowLowUtilityTools(!showLowUtilityTools);
+                        }
+                      }}
+                    >
+                      {alert.action}
+                      {(alert.type === 'overbudget' && showOverBudgetTools) || 
+                       (alert.type === 'utility' && showLowUtilityTools) ? 
+                        <ChevronUp className="h-3 w-3 ml-1" /> : 
+                        <ChevronDown className="h-3 w-3 ml-1" />
                       }
-                    }}
-                  >
-                    {alert.action}
-                    {(alert.type === 'overbudget' && showOverBudgetTools) || 
-                     (alert.type === 'utility' && showLowUtilityTools) ? 
-                      <ChevronUp className="h-3 w-3 ml-1" /> : 
-                      <ChevronDown className="h-3 w-3 ml-1" />
-                    }
-                  </Button>
+                    </Button>
+                  )}
                 </div>
               </div>
             );
