@@ -5,8 +5,7 @@ import {
   Target,
   BarChart3,
   Upload,
-  RefreshCw,
-  Settings
+  RefreshCw
 } from "lucide-react";
 import { KPICard } from "@/components/dashboard/KPICard";
 import { ToolsTable } from "@/components/dashboard/ToolsTable";
@@ -94,10 +93,6 @@ const Index = () => {
               )}
               
               <ExportButtons data={currentData} filename="tool-dashboard" variant="compact" />
-              
-              <Button variant="outline" size="sm">
-                <Settings className="h-4 w-4" />
-              </Button>
             </div>
           </div>
         </div>
