@@ -27,7 +27,7 @@ export function parseCSV(file: File): Promise<ParseResult> {
   });
 }
 
-function processCSVData(rawData: any[]): ParseResult {
+export function processCSVData(rawData: any[]): ParseResult {
   const data: ToolData[] = [];
   const errors: string[] = [];
   const warnings: string[] = [];

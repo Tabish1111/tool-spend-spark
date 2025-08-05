@@ -9,9 +9,10 @@ import { ToolData } from '@/data/dashboardData';
 
 interface FileUploadProps {
   onDataUploaded: (data: ToolData[]) => void;
+  onClose: () => void;
 }
 
-export function FileUpload({ onDataUploaded }: FileUploadProps) {
+export function FileUpload({ onDataUploaded, onClose }: FileUploadProps) {
   const [dragActive, setDragActive] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);

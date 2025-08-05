@@ -81,7 +81,7 @@ const Index = () => {
                   <DialogHeader>
                     <DialogTitle>Upload Your Spreadsheet</DialogTitle>
                   </DialogHeader>
-                  <FileUpload onDataUploaded={handleDataUploaded} />
+                  <FileUpload onDataUploaded={handleDataUploaded} onClose={() => setUploadDialogOpen(false)} />
                 </DialogContent>
               </Dialog>
               
@@ -100,7 +100,7 @@ const Index = () => {
 
       <div className="container mx-auto px-4 py-8 space-y-8">
         {/* KPI Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" data-export-id="kpi-cards">
           <KPICard
             title="Total Monthly Cost"
             value={`$${kpis.totalMonthly.toFixed(2)}`}
@@ -135,14 +135,24 @@ const Index = () => {
         </div>
 
         {/* Budget Alerts */}
-        <BudgetAlerts data={currentData} monthlyBudget={300} />
+        <div data-export-id="budget-alerts">
+          <BudgetAlerts data={currentData} monthlyBudget={300} />
+        </div>
 
         {/* Charts Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <CostByToolChart data={chartData.costByTool} />
-          <CostByPersonChart data={chartData.costByPerson} />
-          <NeedVsWantChart data={chartData.needVsWant} />
-          <GunaHonestyTrend data={gunaData} />
+          <div data-export-id="cost-by-tool-chart">
+            <CostByToolChart data={chartData.costByTool} />
+          </div>
+          <div data-export-id="cost-by-person-chart">
+            <CostByPersonChart data={chartData.costByPerson} />
+          </div>
+          <div data-export-id="need-vs-want-chart">
+            <NeedVsWantChart data={chartData.needVsWant} />
+          </div>
+          <div data-export-id="guna-honesty-trend">
+            <GunaHonestyTrend data={gunaData} />
+          </div>
         </div>
 
         {/* Detailed Table */}
@@ -151,7 +161,9 @@ const Index = () => {
             <h2 className="text-2xl font-semibold">Detailed Tool Analysis</h2>
             <ExportButtons data={currentData} filename="tools-table" />
           </div>
-          <ToolsTable data={currentData} />
+          <div data-export-id="tools-table">
+            <ToolsTable data={currentData} />
+          </div>
         </div>
 
         {/* Footer */}

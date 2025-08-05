@@ -1,4 +1,4 @@
-import { Download } from 'lucide-react';
+import { Download, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -6,7 +6,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { downloadCSV, downloadJSON } from '@/utils/exportUtils';
+import { downloadCSV, downloadJSON, downloadPDF } from '@/utils/exportUtils';
+import { useToast } from '@/hooks/use-toast';
 import { ToolData } from '@/data/dashboardData';
 
 interface ExportButtonsProps {
@@ -20,12 +21,34 @@ export function ExportButtons({
   filename = "tool-data", 
   variant = "full" 
 }: ExportButtonsProps) {
+  const { toast } = useToast();
+
   const handleExportCSV = () => {
     downloadCSV(data, filename);
   };
 
   const handleExportJSON = () => {
     downloadJSON(data, filename);
+  };
+
+  const handleExportPDF = async () => {
+    try {
+      toast({
+        title: "Generating PDF...",
+        description: "Please wait while we create your dashboard report.",
+      });
+      await downloadPDF(filename);
+      toast({
+        title: "PDF Generated",
+        description: "Your dashboard report has been downloaded successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Export Failed",
+        description: "There was an error generating the PDF report.",
+        variant: "destructive",
+      });
+    }
   };
 
   if (variant === 'compact') {
@@ -38,6 +61,10 @@ export function ExportButtons({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={handleExportPDF}>
+            <FileText className="h-4 w-4 mr-2" />
+            Export as PDF
+          </DropdownMenuItem>
           <DropdownMenuItem onClick={handleExportCSV}>
             <Download className="h-4 w-4 mr-2" />
             Export as CSV
@@ -60,6 +87,10 @@ export function ExportButtons({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={handleExportPDF}>
+          <FileText className="h-4 w-4 mr-2" />
+          Download as PDF
+        </DropdownMenuItem>
         <DropdownMenuItem onClick={handleExportCSV}>
           <Download className="h-4 w-4 mr-2" />
           Download as CSV

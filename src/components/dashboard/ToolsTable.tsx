@@ -33,7 +33,7 @@ interface ToolsTableProps {
   data: ToolData[];
 }
 
-type SortField = 'name' | 'monthlyCost' | 'gunaHonestyMeter' | 'accounts';
+type SortField = 'name' | 'monthlyCost' | 'gunaHonestyMeter' | 'accounts' | 'renewalDate';
 type SortDirection = 'asc' | 'desc';
 
 export function ToolsTable({ data }: ToolsTableProps) {
@@ -87,9 +87,16 @@ export function ToolsTable({ data }: ToolsTableProps) {
           />
         ))}
       </div>
-      <span className="text-sm font-medium">{value}/10</span>
+      <span className="text-sm font-medium">{value || 'null'}/10</span>
     </div>
   );
+
+  const formatCellValue = (value: any) => {
+    if (value === null || value === undefined || value === '') {
+      return 'null';
+    }
+    return value;
+  };
 
   return (
     <Card className="p-6">
@@ -187,7 +194,19 @@ export function ToolsTable({ data }: ToolsTableProps) {
                     )}
                   </Button>
                 </TableHead>
-                <TableHead>Details</TableHead>
+                <TableHead>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => handleSort('renewalDate')}
+                    className="h-auto p-0 font-semibold hover:bg-transparent"
+                  >
+                    Renewal Date
+                    {sortField === 'renewalDate' && (
+                      sortDirection === 'asc' ? <SortAsc className="ml-2 h-4 w-4" /> : <SortDesc className="ml-2 h-4 w-4" />
+                    )}
+                  </Button>
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -204,36 +223,31 @@ export function ToolsTable({ data }: ToolsTableProps) {
                   <TableCell>
                     <div className="flex items-center gap-1">
                       <Users className="h-4 w-4 text-muted-foreground" />
-                      {tool.accounts}
+                      {formatCellValue(tool.accounts)}
                     </div>
                   </TableCell>
                   <TableCell className="font-semibold">
-                    ${tool.monthlyCost.toFixed(2)}
+                    {tool.monthlyCost ? `$${tool.monthlyCost.toFixed(2)}` : 'null'}
                   </TableCell>
                   <TableCell>
                     <Badge variant={
                       tool.assignedPerson === 'Both' ? 'secondary' : 'outline'
                     }>
-                      {tool.assignedPerson}
+                      {formatCellValue(tool.assignedPerson)}
                     </Badge>
                   </TableCell>
                   <TableCell>
                     <Badge variant={tool.category === 'Need' ? 'default' : 'secondary'}>
-                      {tool.category}
+                      {formatCellValue(tool.category)}
                     </Badge>
                   </TableCell>
                   <TableCell>
                     <GunaGauge value={tool.gunaHonestyMeter} />
                   </TableCell>
                   <TableCell>
-                    <div className="space-y-1 text-xs text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        {new Date(tool.renewalDate).toLocaleDateString()}
-                      </div>
-                      <div className="truncate max-w-[200px]" title={tool.notes}>
-                        {tool.notes}
-                      </div>
+                    <div className="flex items-center gap-1">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      {tool.renewalDate ? new Date(tool.renewalDate).toLocaleDateString() : 'null'}
                     </div>
                   </TableCell>
                 </TableRow>
