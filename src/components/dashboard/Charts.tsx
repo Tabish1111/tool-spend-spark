@@ -13,6 +13,7 @@ import {
   Line
 } from 'recharts';
 import { ChartCard } from './ChartCard';
+import { useCurrency } from '@/contexts/CurrencyContext';
 
 const COLORS = [
   'hsl(var(--chart-1))',
@@ -29,6 +30,7 @@ interface CostByToolChartProps {
 
 export function CostByToolChart({ data }: CostByToolChartProps) {
   const chartData = data.slice(0, 8); // Show top 8 tools
+  const { formatCurrency, convertAmount, currency } = useCurrency();
 
   return (
     <ChartCard 
@@ -36,7 +38,7 @@ export function CostByToolChart({ data }: CostByToolChartProps) {
       description="Top spending tools ranked by monthly cost"
     >
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+        <BarChart data={chartData.map(item => ({ ...item, cost: convertAmount(item.cost) }))} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
           <XAxis 
             dataKey="name" 
@@ -48,12 +50,12 @@ export function CostByToolChart({ data }: CostByToolChartProps) {
             stroke="hsl(var(--muted-foreground))"
           />
           <YAxis 
-            tickFormatter={(value) => `$${value}`}
+            tickFormatter={(value) => formatCurrency(value).split('.')[0]}
             fontSize={12}
             stroke="hsl(var(--muted-foreground))"
           />
           <Tooltip 
-            formatter={(value: number) => [`$${value.toFixed(2)}`, 'Monthly Cost']}
+            formatter={(value: number) => [formatCurrency(value), 'Monthly Cost']}
             labelStyle={{ color: 'hsl(var(--foreground))' }}
             contentStyle={{ 
               backgroundColor: 'hsl(var(--card))', 
@@ -77,13 +79,14 @@ interface CostByPersonChartProps {
 }
 
 export function CostByPersonChart({ data }: CostByPersonChartProps) {
+  const { formatCurrency, convertAmount } = useCurrency();
   return (
     <ChartCard 
       title="Cost Distribution by Person" 
       description="Monthly spending allocation across team members"
     >
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+        <BarChart data={data.map(item => ({ ...item, cost: convertAmount(item.cost) }))} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
           <XAxis 
             dataKey="person" 
@@ -91,12 +94,12 @@ export function CostByPersonChart({ data }: CostByPersonChartProps) {
             stroke="hsl(var(--muted-foreground))"
           />
           <YAxis 
-            tickFormatter={(value) => `$${value}`}
+            tickFormatter={(value) => formatCurrency(value).split('.')[0]}
             fontSize={12}
             stroke="hsl(var(--muted-foreground))"
           />
           <Tooltip 
-            formatter={(value: number) => [`$${value.toFixed(2)}`, 'Monthly Cost']}
+            formatter={(value: number) => [formatCurrency(value), 'Monthly Cost']}
             labelStyle={{ color: 'hsl(var(--foreground))' }}
             contentStyle={{ 
               backgroundColor: 'hsl(var(--card))', 
@@ -120,6 +123,7 @@ interface NeedVsWantChartProps {
 }
 
 export function NeedVsWantChart({ data }: NeedVsWantChartProps) {
+  const { formatCurrency } = useCurrency();
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
@@ -127,7 +131,7 @@ export function NeedVsWantChart({ data }: NeedVsWantChartProps) {
         <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
           <p className="font-medium text-foreground">{data.name}</p>
           <p className="text-sm text-muted-foreground">
-            {data.value} tools • ${data.cost.toFixed(2)}/month
+            {data.value} tools • {formatCurrency(data.cost)}/month
           </p>
         </div>
       );

@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { ToolData } from "@/data/dashboardData";
 import { cn } from "@/lib/utils";
+import { useCurrency } from "@/contexts/CurrencyContext";
 
 interface ToolsTableProps {
   data: ToolData[];
@@ -42,6 +43,7 @@ export function ToolsTable({ data }: ToolsTableProps) {
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [sortField, setSortField] = useState<SortField>('monthlyCost');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const { formatCurrency } = useCurrency();
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -227,7 +229,7 @@ export function ToolsTable({ data }: ToolsTableProps) {
                     </div>
                   </TableCell>
                   <TableCell className="font-semibold">
-                    {tool.monthlyCost ? `$${tool.monthlyCost.toFixed(2)}` : 'null'}
+                    {tool.monthlyCost ? formatCurrency(tool.monthlyCost) : 'null'}
                   </TableCell>
                   <TableCell>
                     <Badge variant={

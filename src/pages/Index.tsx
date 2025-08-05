@@ -18,8 +18,10 @@ import {
 } from "@/components/dashboard/Charts";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { FileUpload } from "@/components/dashboard/FileUpload";
+import { UploadOptions } from "@/components/dashboard/UploadOptions";
 import { ExportButtons } from "@/components/dashboard/ExportButtons";
+import { CurrencyToggle } from "@/components/dashboard/CurrencyToggle";
+import { useCurrency } from "@/contexts/CurrencyContext";
 import { 
   sampleToolData, 
   calculateKPIs, 
@@ -31,6 +33,7 @@ const Index = () => {
   const [currentData, setCurrentData] = useState<ToolData[]>(sampleToolData);
   const [dataSource, setDataSource] = useState<'sample' | 'uploaded'>('sample');
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+  const { formatCurrency } = useCurrency();
 
   const handleDataUploaded = (uploadedData: ToolData[]) => {
     setCurrentData(uploadedData);
@@ -70,18 +73,20 @@ const Index = () => {
               </p>
             </div>
             <div className="flex items-center gap-3">
+              <CurrencyToggle />
+              
               <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
                 <DialogTrigger asChild>
                   <Button variant="outline" size="sm" className="gap-2">
                     <Upload className="h-4 w-4" />
-                    Upload
+                    Upload Data
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-2xl">
                   <DialogHeader>
-                    <DialogTitle>Upload Your Spreadsheet</DialogTitle>
+                    <DialogTitle>Import Your Data</DialogTitle>
                   </DialogHeader>
-                  <FileUpload onDataUploaded={handleDataUploaded} onClose={() => setUploadDialogOpen(false)} />
+                  <UploadOptions onDataUploaded={handleDataUploaded} onClose={() => setUploadDialogOpen(false)} />
                 </DialogContent>
               </Dialog>
               
@@ -103,7 +108,7 @@ const Index = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" data-export-id="kpi-cards">
           <KPICard
             title="Total Monthly Cost"
-            value={`$${kpis.totalMonthly.toFixed(2)}`}
+            value={formatCurrency(kpis.totalMonthly)}
             subtitle="across all tools"
             icon={DollarSign}
             trend={{ value: 12, label: "vs last month" }}
@@ -111,7 +116,7 @@ const Index = () => {
           />
           <KPICard
             title="Total Yearly Cost"
-            value={`$${kpis.totalYearly.toFixed(0)}`}
+            value={formatCurrency(kpis.totalYearly)}
             subtitle="projected annual spend"
             icon={TrendingUp}
             trend={{ value: -5, label: "vs last year" }}
