@@ -9,7 +9,7 @@ import { ToolData } from '@/data/dashboardData';
 import { parseCSV, processCSVData } from '@/utils/fileProcessing';
 
 interface GoogleSheetsUploadProps {
-  onDataUploaded: (data: ToolData[]) => void;
+  onDataUploaded: (data: ToolData[], source?: 'csv' | 'google-sheets', sheetUrl?: string) => void;
   onClose: () => void;
 }
 
@@ -77,7 +77,7 @@ export function GoogleSheetsUpload({ onDataUploaded, onClose }: GoogleSheetsUplo
     try {
       const data = await fetchGoogleSheetData(sheetUrl);
       setConnectedSheet(sheetUrl);
-      onDataUploaded(data);
+      onDataUploaded(data, 'google-sheets', sheetUrl);
       toast({
         title: "Connected Successfully",
         description: `Imported ${data.length} tools from Google Sheets`,
@@ -100,7 +100,7 @@ export function GoogleSheetsUpload({ onDataUploaded, onClose }: GoogleSheetsUplo
     setIsLoading(true);
     try {
       const data = await fetchGoogleSheetData(connectedSheet);
-      onDataUploaded(data);
+      onDataUploaded(data, 'google-sheets', connectedSheet);
       toast({
         title: "Data Refreshed",
         description: `Updated with ${data.length} tools from Google Sheets`,

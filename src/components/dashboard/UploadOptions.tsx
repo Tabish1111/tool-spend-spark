@@ -7,7 +7,7 @@ import { GoogleSheetsUpload } from './GoogleSheetsUpload';
 import { ToolData } from '@/data/dashboardData';
 
 interface UploadOptionsProps {
-  onDataUploaded: (data: ToolData[]) => void;
+  onDataUploaded: (data: ToolData[], source?: 'csv' | 'google-sheets', sheetUrl?: string) => void;
   onClose: () => void;
 }
 
