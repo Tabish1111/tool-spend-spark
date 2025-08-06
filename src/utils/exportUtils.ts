@@ -9,8 +9,6 @@ export function downloadCSV(data: ToolData[], filename: string = "tool-data") {
     "Monthly Cost",
     "Yearly Cost",
     "Assigned Person",
-    "Category",
-    "Guna Honesty Meter",
     "Renewal Date",
     "Notes"
   ];
@@ -23,10 +21,8 @@ export function downloadCSV(data: ToolData[], filename: string = "tool-data") {
       tool.monthlyCost,
       tool.monthlyCost * 12,
       `"${tool.assignedPerson}"`,
-      `"${tool.category}"`,
-      tool.gunaHonestyMeter,
-      `"${tool.renewalDate}"`,
-      `"${tool.notes}"`
+      `"${tool.renewalDate || 'N/A'}"`,
+      `"${tool.notes || ''}"`
     ].join(","))
   ].join("\n");
 

@@ -49,12 +49,10 @@ export function processCSVData(rawData: any[]): ParseResult {
 
 function mapRowToToolData(row: any, rowNumber: number): ToolData | null {
   // Common field mappings - flexible to handle different column names
-  const nameFields = ['name', 'tool name', 'tool_name', 'toolname', 'Name', 'Tool Name'];
+  const nameFields = ['tool name', 'name', 'tool_name', 'toolname', 'Tool Name', 'Name'];
   const costFields = ['monthly cost', 'monthlycost', 'monthly_cost', 'cost', 'price', 'Monthly Cost'];
   const accountFields = ['accounts', 'account', 'users', 'Accounts'];
-  const personFields = ['person', 'assigned person', 'assignedperson', 'assigned_person', 'owner', 'Person', 'Assigned Person'];
-  const categoryFields = ['category', 'type', 'Category'];
-  const gunaFields = ['guna honesty meter', 'guna', 'honesty', 'rating', 'Guna Honesty Meter'];
+  const personFields = ['person', 'assigned person', 'assignedperson', 'assigned_person', 'owner', 'Person'];
   const renewalFields = ['renewal date', 'renewaldate', 'renewal_date', 'expiry', 'Renewal Date'];
   const notesFields = ['notes', 'description', 'comment', 'Notes'];
 
@@ -62,16 +60,11 @@ function mapRowToToolData(row: any, rowNumber: number): ToolData | null {
   const name = findValue(row, nameFields);
   const rawCost = findValue(row, costFields) || '0';
   // Remove currency symbols and commas before parsing
-  const cleanCost = rawCost.replace(/[$,]/g, '');
+  const cleanCost = rawCost.replace(/[$,₹]/g, '');
   const monthlyCost = parseFloat(cleanCost);
   const accounts = parseInt(findValue(row, accountFields) || '1');
-  const rawAssignedPerson = findValue(row, personFields) || 'Rudyculous';
-  const assignedPerson = ['Rudyculous', 'Rudraksh', 'Both'].includes(rawAssignedPerson) 
-    ? rawAssignedPerson as 'Rudyculous' | 'Rudraksh' | 'Both'
-    : 'Rudyculous';
-  const category = findValue(row, categoryFields) || 'Need';
-  const gunaHonestyMeter = parseInt(findValue(row, gunaFields) || '5');
-  const renewalDate = findValue(row, renewalFields) || new Date().toISOString().split('T')[0];
+  const assignedPerson = findValue(row, personFields) || 'Unknown';
+  const renewalDate = findValue(row, renewalFields);
   const notes = findValue(row, notesFields) || '';
 
   if (!name || name.trim() === '') {
@@ -82,19 +75,12 @@ function mapRowToToolData(row: any, rowNumber: number): ToolData | null {
     throw new Error('Invalid monthly cost');
   }
 
-  // Calculate yearly costs based on monthly cost
-  const actualYearlyCost = monthlyCost * 12;
-
   return {
     id: `imported-${rowNumber}-${Date.now()}`,
     name: name.trim(),
     accounts,
     monthlyCost,
-    yearlySchedule: 'monthly' as const,
-    actualYearlyCost,
-    assignedPerson,
-    category: category === 'Want' ? 'Want' : 'Need',
-    gunaHonestyMeter: Math.max(0, Math.min(10, gunaHonestyMeter)),
+    assignedPerson: assignedPerson.trim(),
     renewalDate,
     notes: notes.trim(),
     isOverBudget: false // Will be calculated later
@@ -136,10 +122,6 @@ export function validateToolData(data: ToolData[]): { isValid: boolean; errors: 
     
     if (tool.accounts < 1) {
       errors.push(`Row ${index + 1}: Must have at least 1 account`);
-    }
-    
-    if (tool.gunaHonestyMeter < 0 || tool.gunaHonestyMeter > 10) {
-      errors.push(`Row ${index + 1}: Guna Honesty Meter must be between 0 and 10`);
     }
   });
 

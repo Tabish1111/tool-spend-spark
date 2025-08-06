@@ -1,4 +1,12 @@
-import { useState } from "react";
+import { useState, useMemo } from 'react';
+import { 
+  Users, 
+  Calendar,
+  Search,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown
+} from 'lucide-react';
 import { 
   Table, 
   TableBody, 
@@ -6,258 +14,224 @@ import {
   TableHead, 
   TableHeader, 
   TableRow 
-} from "@/components/ui/table";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { 
-  Search, 
-  SortAsc, 
-  SortDesc, 
-  AlertTriangle,
-  Users,
-  Calendar
-} from "lucide-react";
-import { ToolData } from "@/data/dashboardData";
-import { cn } from "@/lib/utils";
-import { useCurrency } from "@/contexts/CurrencyContext";
+} from '@/components/ui/table';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useCurrency } from '@/contexts/CurrencyContext';
+import { ToolData } from '@/data/dashboardData';
 
 interface ToolsTableProps {
   data: ToolData[];
 }
 
-type SortField = 'name' | 'monthlyCost' | 'gunaHonestyMeter' | 'accounts' | 'renewalDate';
+type SortField = 'name' | 'monthlyCost' | 'accounts' | 'assignedPerson' | 'renewalDate';
 type SortDirection = 'asc' | 'desc';
 
 export function ToolsTable({ data }: ToolsTableProps) {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [personFilter, setPersonFilter] = useState<string>("all");
-  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [searchTerm, setSearchTerm] = useState('');
+  const [personFilter, setPersonFilter] = useState<string>('all');
   const [sortField, setSortField] = useState<SortField>('monthlyCost');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
-  const { formatCurrency } = useCurrency();
+  const { formatCurrency, convertAmount } = useCurrency();
+
+  // Get unique persons for filter - PRD Required
+  const uniquePersons = useMemo(() => {
+    const persons = new Set(data.map(tool => tool.assignedPerson));
+    return Array.from(persons).sort();
+  }, [data]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
     } else {
       setSortField(field);
-      setSortDirection('desc');
+      setSortDirection('asc');
     }
   };
 
-  const filteredAndSortedData = data
-    .filter(tool => {
-      const matchesSearch = tool.name.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesPerson = personFilter === "all" || tool.assignedPerson === personFilter;
-      const matchesCategory = categoryFilter === "all" || tool.category === categoryFilter;
-      return matchesSearch && matchesPerson && matchesCategory;
-    })
-    .sort((a, b) => {
-      const aVal = a[sortField];
-      const bVal = b[sortField];
-      const modifier = sortDirection === 'asc' ? 1 : -1;
-      
-      if (typeof aVal === 'string' && typeof bVal === 'string') {
-        return aVal.localeCompare(bVal) * modifier;
-      }
-      return ((aVal as number) - (bVal as number)) * modifier;
+  const filteredAndSortedData = useMemo(() => {
+    let filtered = data.filter(tool => {
+      const matchesSearch = tool.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           tool.assignedPerson.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesPerson = personFilter === 'all' || tool.assignedPerson === personFilter;
+      return matchesSearch && matchesPerson;
     });
 
-  const GunaGauge = ({ value }: { value: number }) => (
-    <div className="flex items-center gap-2">
-      <div className="flex gap-1">
-        {[...Array(10)].map((_, i) => (
-          <div
-            key={i}
-            className={cn(
-              "w-2 h-2 rounded-full",
-              i < value 
-                ? value >= 8 ? "bg-success" 
-                  : value >= 6 ? "bg-warning" 
-                  : "bg-destructive"
-                : "bg-muted"
-            )}
-          />
-        ))}
-      </div>
-      <span className="text-sm font-medium">{value || 'null'}/10</span>
-    </div>
-  );
+    return filtered.sort((a, b) => {
+      let aValue: any = a[sortField];
+      let bValue: any = b[sortField];
 
-  const formatCellValue = (value: any) => {
-    if (value === null || value === undefined || value === '') {
-      return 'null';
-    }
-    return value;
+      // Handle null values for renewalDate
+      if (sortField === 'renewalDate') {
+        if (!aValue && !bValue) return 0;
+        if (!aValue) return sortDirection === 'asc' ? 1 : -1;
+        if (!bValue) return sortDirection === 'asc' ? -1 : 1;
+      }
+
+      if (sortField === 'assignedPerson' || sortField === 'name') {
+        aValue = aValue.toLowerCase();
+        bValue = bValue.toLowerCase();
+      }
+
+      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [data, searchTerm, personFilter, sortField, sortDirection]);
+
+  const getSortIcon = (field: SortField) => {
+    if (sortField !== field) return <ArrowUpDown className="h-4 w-4" />;
+    return sortDirection === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />;
   };
 
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString();
+  };
+
+  if (data.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Detailed Tool Analysis</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8 text-muted-foreground">
+            No tool data available. Please upload your data to see the detailed analysis.
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
-    <Card className="p-6">
-      <div className="space-y-4">
-        <div className="flex flex-col lg:flex-row gap-4">
+    <Card>
+      <CardHeader>
+        <CardTitle>Detailed Tool Analysis</CardTitle>
+        <div className="flex flex-col sm:flex-row gap-4">
+          {/* PRD Required: Search bar */}
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search tools..."
+              placeholder="Search tools or people..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
             />
           </div>
-          <div className="flex gap-2">
-            <Select value={personFilter} onValueChange={setPersonFilter}>
-              <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder="Person" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All People</SelectItem>
-                <SelectItem value="Rudyculous">Rudyculous</SelectItem>
-                <SelectItem value="Rudraksh">Rudraksh</SelectItem>
-                <SelectItem value="Both">Both</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-[120px]">
-                <SelectValue placeholder="Category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="Need">Need</SelectItem>
-                <SelectItem value="Want">Want</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          {/* PRD Required: Person filter dropdown */}
+          <Select value={personFilter} onValueChange={setPersonFilter}>
+            <SelectTrigger className="w-full sm:w-48">
+              <SelectValue placeholder="Filter by person" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All People</SelectItem>
+              {uniquePersons.map(person => (
+                <SelectItem key={person} value={person}>{person}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-
-        <div className="rounded-lg border overflow-hidden">
+      </CardHeader>
+      <CardContent>
+        <div className="rounded-md border">
           <Table>
             <TableHeader>
-              <TableRow className="bg-muted/30">
-                <TableHead>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => handleSort('name')}
-                    className="h-auto p-0 font-semibold hover:bg-transparent"
-                  >
+              <TableRow>
+                {/* PRD Required Columns */}
+                <TableHead 
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => handleSort('name')}
+                >
+                  <div className="flex items-center gap-2">
                     Tool Name
-                    {sortField === 'name' && (
-                      sortDirection === 'asc' ? <SortAsc className="ml-2 h-4 w-4" /> : <SortDesc className="ml-2 h-4 w-4" />
-                    )}
-                  </Button>
+                    {getSortIcon('name')}
+                  </div>
                 </TableHead>
-                <TableHead>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => handleSort('accounts')}
-                    className="h-auto p-0 font-semibold hover:bg-transparent"
-                  >
+                <TableHead 
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => handleSort('accounts')}
+                >
+                  <div className="flex items-center gap-2">
                     Accounts
-                    {sortField === 'accounts' && (
-                      sortDirection === 'asc' ? <SortAsc className="ml-2 h-4 w-4" /> : <SortDesc className="ml-2 h-4 w-4" />
-                    )}
-                  </Button>
+                    {getSortIcon('accounts')}
+                  </div>
                 </TableHead>
-                <TableHead>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => handleSort('monthlyCost')}
-                    className="h-auto p-0 font-semibold hover:bg-transparent"
-                  >
+                <TableHead 
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => handleSort('monthlyCost')}
+                >
+                  <div className="flex items-center gap-2">
                     Monthly Cost
-                    {sortField === 'monthlyCost' && (
-                      sortDirection === 'asc' ? <SortAsc className="ml-2 h-4 w-4" /> : <SortDesc className="ml-2 h-4 w-4" />
-                    )}
-                  </Button>
+                    {getSortIcon('monthlyCost')}
+                  </div>
                 </TableHead>
-                <TableHead>Person</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => handleSort('gunaHonestyMeter')}
-                    className="h-auto p-0 font-semibold hover:bg-transparent"
-                  >
-                    Guna Meter
-                    {sortField === 'gunaHonestyMeter' && (
-                      sortDirection === 'asc' ? <SortAsc className="ml-2 h-4 w-4" /> : <SortDesc className="ml-2 h-4 w-4" />
-                    )}
-                  </Button>
+                <TableHead 
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => handleSort('assignedPerson')}
+                >
+                  <div className="flex items-center gap-2">
+                    Person
+                    {getSortIcon('assignedPerson')}
+                  </div>
                 </TableHead>
-                <TableHead>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => handleSort('renewalDate')}
-                    className="h-auto p-0 font-semibold hover:bg-transparent"
-                  >
+                <TableHead 
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => handleSort('renewalDate')}
+                >
+                  <div className="flex items-center gap-2">
                     Renewal Date
-                    {sortField === 'renewalDate' && (
-                      sortDirection === 'asc' ? <SortAsc className="ml-2 h-4 w-4" /> : <SortDesc className="ml-2 h-4 w-4" />
-                    )}
-                  </Button>
+                    {getSortIcon('renewalDate')}
+                  </div>
                 </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredAndSortedData.map((tool) => (
-                <TableRow key={tool.id} className="hover:bg-muted/20">
-                  <TableCell className="font-medium">
-                    <div className="flex items-center gap-2">
-                      {tool.isOverBudget && (
-                        <AlertTriangle className="h-4 w-4 text-destructive" />
-                      )}
-                      {tool.name}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1">
-                      <Users className="h-4 w-4 text-muted-foreground" />
-                      {formatCellValue(tool.accounts)}
-                    </div>
-                  </TableCell>
-                  <TableCell className="font-semibold">
-                    {tool.monthlyCost ? formatCurrency(tool.monthlyCost) : 'null'}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={
-                      tool.assignedPerson === 'Both' ? 'secondary' : 'outline'
-                    }>
-                      {formatCellValue(tool.assignedPerson)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={tool.category === 'Need' ? 'default' : 'secondary'}>
-                      {formatCellValue(tool.category)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <GunaGauge value={tool.gunaHonestyMeter} />
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      {tool.renewalDate ? new Date(tool.renewalDate).toLocaleDateString() : 'null'}
-                    </div>
+              {filteredAndSortedData.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                    No tools match your current filters.
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                filteredAndSortedData.map((tool) => (
+                  <TableRow key={tool.id} className="hover:bg-muted/50">
+                    <TableCell className="font-medium">
+                      {tool.name}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        <Users className="h-4 w-4 text-muted-foreground" />
+                        {tool.accounts}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <span className="font-semibold">
+                        {formatCurrency(convertAmount(tool.monthlyCost))}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      {tool.assignedPerson}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-muted-foreground" />
+                        {formatDate(tool.renewalDate)}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </div>
-      </div>
+        {filteredAndSortedData.length > 0 && (
+          <div className="mt-4 text-sm text-muted-foreground">
+            Showing {filteredAndSortedData.length} of {data.length} tools
+          </div>
+        )}
+      </CardContent>
     </Card>
   );
 }

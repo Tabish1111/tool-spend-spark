@@ -23,7 +23,6 @@ import { ExportButtons } from "@/components/dashboard/ExportButtons";
 import { CurrencyToggle } from "@/components/dashboard/CurrencyToggle";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { 
-  sampleToolData, 
   calculateKPIs, 
   getChartData,
   ToolData
@@ -85,12 +84,6 @@ const Index = () => {
 
   const kpis = calculateKPIs(currentData);
   const chartData = getChartData(currentData);
-  
-  // Prepare data for Guna Honesty chart
-  const gunaData = currentData.map(tool => ({
-    name: tool.name,
-    honesty: tool.gunaHonestyMeter
-  }));
 
   return (
     <div className="min-h-screen bg-background">
@@ -177,7 +170,7 @@ const Index = () => {
               />
             </div>
 
-            {/* Charts - Only show the required 2 */}
+            {/* Charts - PRD Required: Only 2 charts */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div data-export-id="cost-by-tool-chart">
                 <CostByToolChart data={chartData.costByTool} />

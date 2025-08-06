@@ -25,7 +25,7 @@ const COLORS = [
 ];
 
 interface CostByToolChartProps {
-  data: Array<{ name: string; cost: number; category: string }>;
+  data: Array<{ name: string; cost: number }>;
 }
 
 export function CostByToolChart({ data }: CostByToolChartProps) {
